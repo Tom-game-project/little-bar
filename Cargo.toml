@@ -1,8 +1,10 @@
 [package]
-name = "rust-plugin-example"
+name = "little-bar"
 version = "0.1.0"
-authors = ["Aram Drevekenin <aram@poor.dev>"]
-edition = "2018"
+authors = ["Muranaka Tomonari <tom.ipynb@gmail.com>"]
+edition = "2024"
 
 [dependencies]
 zellij-tile = "0.41.1"
+chrono = "0.4.42"
+chrono-tz = "0.10.4"

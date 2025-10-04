@@ -1,7 +1,9 @@
-use zellij_tile::prelude::*;
+mod clock;
 
+use clock::clock_emoji;
+use zellij_tile::prelude::*;
 // chronoクレートから時刻を扱うためのものをインポートします
-use chrono::{DateTime, TimeZone, Utc};
+use chrono::{DateTime, Utc};
 use chrono_tz::Tz;
 
 use std::collections::BTreeMap;
@@ -30,6 +32,7 @@ impl ZellijPlugin for State {
         request_permission(&[
             PermissionType::ReadApplicationState,
         ]);
+        set_selectable(false);
         subscribe(&[
             EventType::Timer,
             EventType::TabUpdate,
@@ -83,8 +86,7 @@ impl ZellijPlugin for State {
 
         let width = 10;
         
-        let mode_text = Text::new(input_mode_to_text(&self.mode))
-        .color_range(2, 0..);
+        let mode_text = input_mode_to_text(&self.mode); //.color_range(2, 0..);
 
         print_text_with_coordinates(mode_text, 0, 0, Some(10), None);
         for (i, j) in self.tabs.iter().enumerate()
@@ -93,37 +95,42 @@ impl ZellijPlugin for State {
             if j.active {
                 text = text.selected();
             }
-            print_ribbon_with_coordinates(text,10 + i * width, 0, Some(width), None);
+            print_text_with_coordinates(text,(cols / 2) + i * width - (self.tabs.len() * width / 2), 0, Some(width), None);
+            // print_ribbon_with_coordinates(text,(cols / 2) + i * width - (self.tabs.len() * width / 2), 0, Some(width), None);
         }
 
         let width = 15;
-        let text = Text::new(format!("{}", self.current_time
+        let text = Text::new(format!("{} {}", &self.current_time
                 .with_timezone(&self.timezone)
-                .format("%H:%M:%S").to_string())
+                .format("%H:%M")
+                .to_string(),
+                clock_emoji(&self.current_time.with_timezone(&self.timezone)
+                )
+            )
         );
         print_ribbon_with_coordinates(text,cols - width, 0, Some(width), None);
 
         // Debug MSG
-        print!("rows {} : cols {}", rows, cols);
+        // print!("rows {} : cols {}", rows, cols);
     }
 }
 
-
-fn input_mode_to_text(mode: &ModeInfo) -> String {
+fn input_mode_to_text(mode: &ModeInfo) -> Text {
     match mode.mode{
-        InputMode::Normal => "NORMAL".to_string(),
-        InputMode::Locked => "LOCKED".to_string(),
-        InputMode::Resize => "RESIZE".to_string(),
-        InputMode::Pane => "PANE".to_string(),
-        InputMode::Tab => "TAB".to_string(),
-        InputMode::Scroll => "SCROLL".to_string(),
-        InputMode::EnterSearch => "ENTERSEARCH".to_string(),
-        InputMode::Session => "SESSION".to_string(),
-        InputMode::Search => "SEARCH".to_string(),
-        InputMode::RenameTab => "RENAMETAB".to_string(),
-        InputMode::Move => "MOVE".to_string(),
-        InputMode::RenamePane => "RENAMEPANE".to_string(),
-        InputMode::Prompt => "PROMPT".to_string(),
-        InputMode::Tmux => "TMUX".to_string(),
+        InputMode::Normal => Text::new("NORMAL".to_string()).color_range(1, 0..),
+        InputMode::Locked => Text::new("LOCKED".to_string()).color_range(2, 0..),
+        InputMode::Resize => Text::new("RESIZE".to_string()).color_range(2, 0..),
+        InputMode::Pane => Text::new("PANE".to_string()).color_range(2, 0..),
+        InputMode::Tab => Text::new("TAB".to_string()).color_range(2, 0..),
+        InputMode::Scroll => Text::new("SCROLL".to_string()).color_range(2, 0..),
+        InputMode::EnterSearch => Text::new("ENTERSEARCH".to_string()).color_range(2, 0..),
+        InputMode::Session => Text::new("SESSION".to_string()).color_range(2, 0..),
+        InputMode::Search => Text::new("SEARCH".to_string()).color_range(2, 0..),
+        InputMode::RenameTab => Text::new("RENAMETAB".to_string()).color_range(2, 0..),
+        InputMode::Move => Text::new("MOVE".to_string()).color_range(2, 0..),
+        InputMode::RenamePane => Text::new("RENAMEPANE".to_string()).color_range(2, 0..),
+        InputMode::Prompt => Text::new("PROMPT".to_string()).color_range(2, 0..),
+        InputMode::Tmux => Text::new("TMUX".to_string()).color_range(2, 0..),
     }
 }
+

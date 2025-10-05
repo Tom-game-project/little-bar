@@ -1,8 +1,6 @@
 ## About
 
-This is an example [Zellij][zellij] plugin in Rust. It can be used as a template to start developing your own plugins.
-
-More about Zellij plugins: [Zellij Documentation][docs]
+This is a [Zellij][zellij] plugin in Rust. 
 
 [zellij]: https://github.com/zellij-org/zellij
 [docs]: https://zellij.dev/documentation/plugins.html
@@ -11,14 +9,24 @@ More about Zellij plugins: [Zellij Documentation][docs]
 
 *Note*: you will need to have `wasm32-wasi` added to rust as a target to build the plugin. This can be done with `rustup target add wasm32-wasi`.
 
-### With the Provided Layout
+## Image
 
-![img-2024-11-14-100111](https://github.com/user-attachments/assets/e3bae15c-1f94-4d4a-acea-a036f8afdf67)
+<img width="1917" height="25" alt="image" src="https://github.com/user-attachments/assets/b033320e-458f-434e-a6f9-a369a1052fab" />
 
+## How to use
 
-Run `zellij -l zellij.kdl` at the root of this repository. This will open a development environment that will help you develop the plugin inside Zellij.
-
-It can also be used if you prefer developing outside of the terminal - in this case you should ignore the `$EDITOR` pane and use your IDE instead.
+`~/.config/zellij/layouts/defaults.kdl`
+```kdl
+layout {
+    default_tab_template {
+        children
+        pane size=1 borderless=true {
+            plugin location="file:~/.config/zellij/plugins/little-bar.wasm" {
+            }
+        }
+    }
+}
+```
 
 ### Otherwise
 

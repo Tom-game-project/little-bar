@@ -15,6 +15,7 @@ struct State {
     current_time: DateTime<Utc>,
     tabs: Vec<TabInfo>,
     mode: ModeInfo,
+    session: Vec<SessionInfo>,
 }
 
 register_plugin!(State);
@@ -37,6 +38,7 @@ impl ZellijPlugin for State {
             EventType::Timer,
             EventType::TabUpdate,
             EventType::ModeUpdate,
+            EventType::SessionUpdate,
         ]);
     }
 
@@ -65,6 +67,10 @@ impl ZellijPlugin for State {
                 self.mode = mode;
                 should_render = true;
             }
+            Event::SessionUpdate(session, _) => {
+                self.session = session;
+                should_render = true;
+            }
             // その他のイベントは無視します
             _ => (),
         };
@@ -85,10 +91,13 @@ impl ZellijPlugin for State {
         // print_text_with_coordinates(text, 0, 0, None, None);
 
         let width = 10;
-        
+
+        let session_name = format!("({})", current_session_name(&self.session));
+        let session_text = Text::new(session_name);
         let mode_text = input_mode_to_text(&self.mode); //.color_range(2, 0..);
 
-        print_text_with_coordinates(mode_text, 0, 0, Some(10), None);
+        print_text_with_coordinates(session_text, 0, 0, Some(10), None);
+        print_text_with_coordinates(mode_text, 10, 0, Some(10), None);
         for (i, j) in self.tabs.iter().enumerate()
         {
             let mut text = Text::new(format!("{}", j.name));
@@ -96,7 +105,6 @@ impl ZellijPlugin for State {
                 text = text.selected();
             }
             print_text_with_coordinates(text,(cols / 2) + i * width - (self.tabs.len() * width / 2), 0, Some(width), None);
-            // print_ribbon_with_coordinates(text,(cols / 2) + i * width - (self.tabs.len() * width / 2), 0, Some(width), None);
         }
 
         let width = 15;
@@ -109,9 +117,15 @@ impl ZellijPlugin for State {
             )
         );
         print_ribbon_with_coordinates(text,cols - width, 0, Some(width), None);
+    }
+}
 
-        // Debug MSG
-        // print!("rows {} : cols {}", rows, cols);
+fn current_session_name(session_list: &[SessionInfo]) -> String {
+    if let Some(a) = session_list.iter().find(|a| a.is_current_session) {
+        a.name.clone()
+    }
+    else {
+        "".to_string()
     }
 }
 

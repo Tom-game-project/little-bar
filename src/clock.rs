@@ -1,4 +1,4 @@
-use chrono::{DateTime, Timelike, Utc,};
+use chrono::{DateTime, Timelike};
 use chrono_tz::Tz;
 
 pub fn clock_emoji(date: &DateTime<Tz>) -> String {

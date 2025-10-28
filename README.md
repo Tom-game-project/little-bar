@@ -15,6 +15,11 @@ This is a [Zellij][zellij] plugin in Rust.
 
 ## How to use
 
+```sh
+cargo build --release
+cp target/wasm32-wasip1/release/little-bar.wasm ~/.config/zellij/plugins/little-bar.wasm
+```
+
 `~/.config/zellij/layouts/defaults.kdl`
 ```kdl
 layout {
@@ -28,8 +33,10 @@ layout {
 }
 ```
 
+then, reload plugin.
+
 ### Otherwise
 
 1. Build the project: `cargo build`
-2. Load it inside a running Zellij session: `zellij action start-or-reload-plugin file:target/wasm32-wasi/debug/rust-plugin-example.wasm`
+2. Load it inside a running Zellij session: `zellij action start-or-reload-plugin file:target/wasm32-wasip1/release/little-bar.wasm`
 3. Repeat on changes (perhaps with a `watchexec` or similar command to run on fs changes).

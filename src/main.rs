@@ -28,17 +28,17 @@ register_plugin!(State);
 impl ZellijPlugin for State {
     fn load(&mut self, configuration: BTreeMap<String, String>) {
         self.timezone = "Asia/Tokyo".parse().unwrap();
-
         set_timeout(1.0);
+
         request_permission(&[
             PermissionType::ReadApplicationState,
         ]);
-        set_selectable(false);
         subscribe(&[
             EventType::Timer,
             EventType::TabUpdate,
             EventType::ModeUpdate,
             EventType::SessionUpdate,
+            EventType::PermissionRequestResult,
         ]);
     }
 
@@ -70,6 +70,9 @@ impl ZellijPlugin for State {
             Event::SessionUpdate(session, _) => {
                 self.session = session;
                 should_render = true;
+            }
+            Event::PermissionRequestResult(result) => {
+                set_selectable(false);
             }
             // その他のイベントは無視します
             _ => (),

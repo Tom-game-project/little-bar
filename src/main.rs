@@ -16,6 +16,7 @@ struct State {
     tabs: Vec<TabInfo>,
     mode: ModeInfo,
     session: Vec<SessionInfo>,
+    battery: String,
 }
 
 register_plugin!(State);
@@ -32,6 +33,7 @@ impl ZellijPlugin for State {
 
         request_permission(&[
             PermissionType::ReadApplicationState,
+            PermissionType::RunCommands,
         ]);
         subscribe(&[
             EventType::Timer,
@@ -39,6 +41,7 @@ impl ZellijPlugin for State {
             EventType::ModeUpdate,
             EventType::SessionUpdate,
             EventType::PermissionRequestResult,
+            EventType::RunCommandResult,
         ]);
     }
 
@@ -56,6 +59,7 @@ impl ZellijPlugin for State {
                 self.current_time = time;
                 // 画面を再描画するように指示します
                 should_render = true;
+                run_command(&["cat", "/sys/class/power_supply/BAT0/capacity"], BTreeMap::new());
                 // 再度1秒後に`Timer`イベントを発生させるように依頼し、ループさせます
                 set_timeout(1.0);
             }
@@ -73,6 +77,12 @@ impl ZellijPlugin for State {
             }
             Event::PermissionRequestResult(result) => {
                 set_selectable(false);
+            }
+            Event::RunCommandResult(exit_code, stdout, stderr, context) => {
+                let stdout_string = String::from_utf8_lossy(&stdout);
+                let stdout_string = stdout_string.to_string().trim().to_string();
+                self.battery = stdout_string;
+                should_render = true;
             }
             // その他のイベントは無視します
             _ => (),
@@ -108,6 +118,14 @@ impl ZellijPlugin for State {
                 text = text.selected();
             }
             print_text_with_coordinates(text,(cols / 2) + i * width - (self.tabs.len() * width / 2), 0, Some(width), None);
+        }
+
+        // バッテリー表示の追加
+        if!self.battery.is_empty() {
+            let battery_width = 8;
+            let battery_text = Text::new(format!("🔋{}%", self.battery));
+            // 時計の左隣（cols - 15 - 8 = cols - 23）付近に配置
+            print_text_with_coordinates(battery_text, cols - 23, 0, Some(battery_width), None);
         }
 
         let width = 15;

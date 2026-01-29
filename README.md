@@ -33,6 +33,11 @@ layout {
 }
 ```
 
+debug
+```sh
+zellij action start-or-reload-plugin file:target/wasm32-wasip1/debug/little-bar.wasm
+```
+
 then, reload plugin.
 
 ### Otherwise

@@ -163,24 +163,24 @@ impl ZellijPlugin for State {
             let battery_width = 8;
             if let Ok(battery_num) = self.battery.parse::<i32>() {
                 let icon = match battery_num {
-                    0       => NF_MD_BATTERY_CHARGING_0 ,
-                    1 ..10  => NF_MD_BATTERY_CHARGING_10,
-                    10..20  => NF_MD_BATTERY_CHARGING_20,
-                    20..30  => NF_MD_BATTERY_CHARGING_30,
-                    30..40  => NF_MD_BATTERY_CHARGING_40,
-                    40..50  => NF_MD_BATTERY_CHARGING_50,
-                    50..60  => NF_MD_BATTERY_CHARGING_60,
-                    60..70  => NF_MD_BATTERY_CHARGING_70,
-                    70..80  => NF_MD_BATTERY_CHARGING_80,
-                    80..90  => NF_MD_BATTERY_CHARGING_90,
-                    90..101 => NF_MD_BATTERY            , 
+                    0 ..10  => NF_MD_BATTERY_CHARGING_0 ,
+                    10..20  => NF_MD_BATTERY_CHARGING_10,
+                    20..30  => NF_MD_BATTERY_CHARGING_20,
+                    30..40  => NF_MD_BATTERY_CHARGING_30,
+                    40..50  => NF_MD_BATTERY_CHARGING_40,
+                    50..60  => NF_MD_BATTERY_CHARGING_50,
+                    60..70  => NF_MD_BATTERY_CHARGING_60,
+                    70..80  => NF_MD_BATTERY_CHARGING_70,
+                    80..90  => NF_MD_BATTERY_CHARGING_80,
+                    90..100 => NF_MD_BATTERY_CHARGING_90, 
+                    100      => NF_MD_BATTERY           ,
                     _ => NF_MD_BATTERY_CHARGING_0,
                 };
 
                 let battery_text = 
                     match self.battery_status.as_str() {
                         "Charging" => Text::new(NF_MD_POWER_PLUG).color_range(2, 0..),
-                        "Discharging" => Text::new(NF_MD_LIGHTNING_BOLT).color_range(2, 0..),
+                        "Discharging" => Text::new(NF_MD_LIGHTNING_BOLT).color_range(0, 0..),
                         "Full" => Text::new(NF_FA_CHECK).color_range(2, 0..),
                         "Not charging" => Text::new(NF_MD_POWER_PLUG).color_range(0, 0..),
                         _ => {

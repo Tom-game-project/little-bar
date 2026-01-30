@@ -45,3 +45,10 @@ then, reload plugin.
 1. Build the project: `cargo build`
 2. Load it inside a running Zellij session: `zellij action start-or-reload-plugin file:target/wasm32-wasip1/release/little-bar.wasm`
 3. Repeat on changes (perhaps with a `watchexec` or similar command to run on fs changes).
+
+
+# try nerd font 
+
+```sh
+printf '\U000eb2d\n'
+```

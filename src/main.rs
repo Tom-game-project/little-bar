@@ -17,9 +17,30 @@ struct State {
     mode: ModeInfo,
     session: Vec<SessionInfo>,
     battery: String,
+    battery_status: String,
 }
 
 register_plugin!(State);
+
+// nerd font const settings 
+// https://www.nerdfonts.com/cheat-sheet
+// - battery
+const NF_MD_BATTERY_CHARGING_0 : &'static str = "\u{f008e}";
+const NF_MD_BATTERY_CHARGING_10: &'static str = "\u{f007a}";
+const NF_MD_BATTERY_CHARGING_20: &'static str = "\u{f007b}";
+const NF_MD_BATTERY_CHARGING_30: &'static str = "\u{f007c}";
+const NF_MD_BATTERY_CHARGING_40: &'static str = "\u{f007d}";
+const NF_MD_BATTERY_CHARGING_50: &'static str = "\u{f007e}";
+const NF_MD_BATTERY_CHARGING_60: &'static str = "\u{f007f}";
+const NF_MD_BATTERY_CHARGING_70: &'static str = "\u{f0080}";
+const NF_MD_BATTERY_CHARGING_80: &'static str = "\u{f0081}";
+const NF_MD_BATTERY_CHARGING_90: &'static str = "\u{f0082}";
+const NF_MD_BATTERY            : &'static str = "\u{f0079}";
+// - charge mode 
+const NF_MD_POWER_PLUG         : &'static str = "\u{f06a5}";
+const NF_FA_CHECK              : &'static str = "\u{f00c}" ;
+const NF_MD_LIGHTNING_BOLT     : &'static str = "\u{f140b}";
+
 
 // NOTE: you can start a development environment inside Zellij by running `zellij -l zellij.kdl` in
 // this plugin's folder
@@ -59,7 +80,16 @@ impl ZellijPlugin for State {
                 self.current_time = time;
                 // 画面を再描画するように指示します
                 should_render = true;
-                run_command(&["cat", "/sys/class/power_supply/BAT0/capacity"], BTreeMap::new());
+                
+                run_command(
+                    &["cat", "/sys/class/power_supply/BAT0/capacity"],
+                    BTreeMap::from([("kind".to_string(), "capacity".to_string())]),
+                );
+
+                run_command(
+                    &["cat", "/sys/class/power_supply/BAT0/status"],
+                    BTreeMap::from([("kind".to_string(), "status".to_string())]));
+
                 // 再度1秒後に`Timer`イベントを発生させるように依頼し、ループさせます
                 set_timeout(1.0);
             }
@@ -81,7 +111,15 @@ impl ZellijPlugin for State {
             Event::RunCommandResult(exit_code, stdout, stderr, context) => {
                 let stdout_string = String::from_utf8_lossy(&stdout);
                 let stdout_string = stdout_string.to_string().trim().to_string();
-                self.battery = stdout_string;
+
+                match context.get("kind").map(|x| x.as_str()) {
+                    Some("capacity") =>{
+                        self.battery = stdout_string;
+                    }
+                    Some("status") =>
+                        self.battery_status = stdout_string,
+                    _ => {}
+                }
                 should_render = true;
             }
             // その他のイベントは無視します
@@ -121,11 +159,40 @@ impl ZellijPlugin for State {
         }
 
         // バッテリー表示の追加
-        if!self.battery.is_empty() {
+        if !self.battery.is_empty() {
             let battery_width = 8;
-            let battery_text = Text::new(format!("🔋{}%", self.battery));
-            // 時計の左隣（cols - 15 - 8 = cols - 23）付近に配置
-            print_text_with_coordinates(battery_text, cols - 23, 0, Some(battery_width), None);
+            if let Ok(battery_num) = self.battery.parse::<i32>() {
+                let icon = match battery_num {
+                    0       => NF_MD_BATTERY_CHARGING_0 ,
+                    1 ..10  => NF_MD_BATTERY_CHARGING_10,
+                    10..20  => NF_MD_BATTERY_CHARGING_20,
+                    20..30  => NF_MD_BATTERY_CHARGING_30,
+                    30..40  => NF_MD_BATTERY_CHARGING_40,
+                    40..50  => NF_MD_BATTERY_CHARGING_50,
+                    50..60  => NF_MD_BATTERY_CHARGING_60,
+                    60..70  => NF_MD_BATTERY_CHARGING_70,
+                    70..80  => NF_MD_BATTERY_CHARGING_80,
+                    80..90  => NF_MD_BATTERY_CHARGING_90,
+                    90..100 => NF_MD_BATTERY            , 
+                    _ => NF_MD_BATTERY_CHARGING_0,
+                };
+
+                let battery_text = 
+                    match self.battery_status.as_str() {
+                        "Charging" => Text::new(NF_MD_POWER_PLUG).color_range(2, 0..),
+                        "Discharging" => Text::new(NF_MD_LIGHTNING_BOLT).color_range(2, 0..),
+                        "Full" => Text::new(NF_FA_CHECK).color_range(2, 0..),
+                        "Not charging" => Text::new(NF_MD_POWER_PLUG).color_range(0, 0..),
+                        _ => {
+                            Text::new("E").color_range(0, 0..)
+                        }
+                    } ;
+                // 時計の左隣（cols - 15 - 8 = cols - 23）付近に配置
+                print_text_with_coordinates(battery_text, cols - 23, 0, Some(battery_width), None);
+                print_text_with_coordinates(Text::new(format!("{}{}%", icon, battery_num)), cols - 22, 0, Some(battery_width), None);
+            } else {
+                // failed to parse 
+            }
         }
 
         let width = 15;
@@ -168,4 +235,3 @@ fn input_mode_to_text(mode: &ModeInfo) -> Text {
         InputMode::Tmux => Text::new("TMUX".to_string()).color_range(2, 0..),
     }
 }
-

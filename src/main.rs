@@ -173,7 +173,7 @@ impl ZellijPlugin for State {
                     60..70  => NF_MD_BATTERY_CHARGING_70,
                     70..80  => NF_MD_BATTERY_CHARGING_80,
                     80..90  => NF_MD_BATTERY_CHARGING_90,
-                    90..100 => NF_MD_BATTERY            , 
+                    90..101 => NF_MD_BATTERY            , 
                     _ => NF_MD_BATTERY_CHARGING_0,
                 };
 

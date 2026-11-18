@@ -7,7 +7,7 @@ This is a [Zellij][zellij] plugin in Rust.
 
 ## Development
 
-*Note*: you will need to have `wasm32-wasi` added to rust as a target to build the plugin. This can be done with `rustup target add wasm32-wasi`.
+*Note*: you will need to have `wasm32-wasip1` added to rust as a target to build the plugin. This can be done with `rustup target add wasm32-wasip1`.
 
 ## Image
 

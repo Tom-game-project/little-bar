@@ -42,6 +42,12 @@ const NF_FA_CHECK              : &'static str = "\u{f00c}" ;
 const NF_MD_LIGHTNING_BOLT     : &'static str = "\u{f140b}";
 
 
+// - layout
+// 左側: セッション名(10) + モード(10)
+const LEFT_AREA_WIDTH: usize = 20;
+// 右側: バッテリー(8) + 時計(15)
+const RIGHT_AREA_WIDTH: usize = 23;
+
 // NOTE: you can start a development environment inside Zellij by running `zellij -l zellij.kdl` in
 // this plugin's folder
 //
@@ -50,6 +56,8 @@ const NF_MD_LIGHTNING_BOLT     : &'static str = "\u{f140b}";
 impl ZellijPlugin for State {
     fn load(&mut self, configuration: BTreeMap<String, String>) {
         self.timezone = "Asia/Tokyo".parse().unwrap();
+        // 最初のTimerイベントが来るまで 1970-01-01 (09:00) が表示されないように初期化します
+        self.current_time = Utc::now();
         set_timeout(1.0);
 
         request_permission(&[
@@ -109,8 +117,12 @@ impl ZellijPlugin for State {
                 set_selectable(false);
             }
             Event::RunCommandResult(exit_code, stdout, stderr, context) => {
-                let stdout_string = String::from_utf8_lossy(&stdout);
-                let stdout_string = stdout_string.to_string().trim().to_string();
+                // コマンドが失敗した場合（バッテリーが無い環境など）は空文字にして非表示にします
+                let stdout_string = if exit_code == Some(0) {
+                    String::from_utf8_lossy(&stdout).trim().to_string()
+                } else {
+                    String::new()
+                };
 
                 match context.get("kind").map(|x| x.as_str()) {
                     Some("capacity") =>{
@@ -149,17 +161,35 @@ impl ZellijPlugin for State {
 
         print_text_with_coordinates(session_text, 0, 0, Some(10), None);
         print_text_with_coordinates(mode_text, 10, 0, Some(10), None);
-        for (i, j) in self.tabs.iter().enumerate()
-        {
-            let mut text = Text::new(format!("{}", j.name));
-            if j.active {
-                text = text.selected();
+        // タブを描画できる領域: 左はセッション名+モード、右はバッテリー+時計を避けます
+        let tabs_left = LEFT_AREA_WIDTH;
+        let tabs_right = cols.saturating_sub(RIGHT_AREA_WIDTH);
+        let max_visible = tabs_right.saturating_sub(tabs_left) / width;
+        if max_visible > 0 && !self.tabs.is_empty() {
+            let tab_count = self.tabs.len();
+            let visible = tab_count.min(max_visible);
+            // 収まりきらない場合は、アクティブなタブが必ず見えるように表示範囲をずらします
+            let active = self.tabs.iter().position(|t| t.active).unwrap_or(0);
+            let first = active
+                .saturating_sub(visible / 2)
+                .min(tab_count - visible);
+            // 画面中央に寄せつつ、左右の領域にはみ出さないようにします
+            let total = visible * width;
+            let start = (cols / 2)
+                .saturating_sub(total / 2)
+                .max(tabs_left)
+                .min(tabs_right - total);
+            for (i, j) in self.tabs.iter().skip(first).take(visible).enumerate() {
+                let mut text = Text::new(&j.name);
+                if j.active {
+                    text = text.selected();
+                }
+                print_text_with_coordinates(text, start + i * width, 0, Some(width), None);
             }
-            print_text_with_coordinates(text,(cols / 2) + i * width - (self.tabs.len() * width / 2), 0, Some(width), None);
         }
 
         // バッテリー表示の追加
-        if !self.battery.is_empty() {
+        if !self.battery.is_empty() && cols >= RIGHT_AREA_WIDTH {
             let battery_width = 8;
             if let Ok(battery_num) = self.battery.parse::<i32>() {
                 let icon = match battery_num {
@@ -204,7 +234,7 @@ impl ZellijPlugin for State {
                 )
             )
         );
-        print_ribbon_with_coordinates(text,cols - width, 0, Some(width), None);
+        print_ribbon_with_coordinates(text, cols.saturating_sub(width), 0, Some(width), None);
     }
 }
 
